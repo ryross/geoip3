@@ -1,8 +1,8 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
 /**
- * @package  KohanaGeoip
+ * @package  GeoIP3
  *
- * Settings related to the Kohana MAXMIND GeoIP module.
+ * Settings related to the Kohana 3 MAXMIND GeoIP module.
  */
 
 

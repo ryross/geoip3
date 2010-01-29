@@ -11,34 +11,32 @@
 class Geoip3 {
 
 	protected $_config;
-	protected static $instance;
+	protected static $_instance;
 	protected $_geoinstance;
 	protected $_cache = array();
 	
-	/**
-	 * Singleton pattern
-	 *
-	 * @return Geoip3
-	 */
 	public static function instance()
 	{
-		if ( ! isset(Geoip3::$instance))
+		if ( ! isset(Geoip3::$_instance))
 		{
 			// Load the configuration for this type
 			$config = Kohana::config('geoip3');
 
 			// Create a new session instance
-			Geoip3::$instance = new Geoip3($config);
+			Geoip3::$_instance = new Geoip3($config);
 		}
 		
-		return Geoip3::$instance;
+		return Geoip3::$_instance;
 	}
 	
 	public function __construct($config = NULL)
 	{
 		
 		$this->_config = Kohana::config('geoip3');
-		is_array($config) AND $this->_config = array_merge($this->_config, $config);
+		if(is_array($config))
+		{
+			$this->_config = array_merge($this->_config, $config);
+		}
 		
 		
 		if ( ! class_exists('GeoIP', FALSE))
@@ -62,12 +60,12 @@ class Geoip3 {
 		}
 	}
 	
-	public function get_city($ipaddress)
+	public function city($ipaddress)
 	{
-		return $this->get_property('city', $ipaddress);
+		return $this->property('city', $ipaddress);
 	}
-    
-	public function get_record($ipaddress)
+	
+	public function record($ipaddress)
 	{
 		global $GEOIP_REGION_NAME;
 		
@@ -92,10 +90,10 @@ class Geoip3 {
 		}
 		return $this->_cache[$ipaddress];
 	}
-    
-	public function get_coord($ipaddress, $mode = 'geo-dms')
+	
+	public function coord($ipaddress, $mode = 'geo-dms')
 	{
-		$rec = $this->get_record($ipaddress);
+		$rec = $this->record($ipaddress);
 		if ( ! $rec) 
 			return NULL;
 		
@@ -108,7 +106,7 @@ class Geoip3 {
 		// standard geo
 		if ($mode == 'geo')
 			return round($rec->latitude,3).'; '.round($rec->longitude, 3);
-
+		
 		
 		$lat = round(str_replace("-","", $rec->latitude, $nr),3); // negative means South
 		$lat_dir = 'N';
@@ -127,7 +125,7 @@ class Geoip3 {
 		// decimal
 		if ($mode == 'geo-dec')
 			return $lat.'&deg;'.$lat_dir.' '.$long.'&deg;'.$long_dir;
-
+		
 		
 		// degree-minute-second
 		$d = floor($lat);
@@ -137,13 +135,13 @@ class Geoip3 {
 		$d = floor($long);
 		$m = sprintf("%02d", round(($long-$d)*60));
 		$long = $d.'&deg;'.$m.'&prime;'.$long_dir;
-
+		
 		return $lat.' '.$long;
 	}
-
-	public function get_property($property, $ipaddress)
+	
+	public function property($property, $ipaddress)
 	{
-		$record = $this->get_record($ipaddress);
+		$record = $this->record($ipaddress);
 		
 		if ( ! $record )
 			return NULL;
@@ -153,15 +151,15 @@ class Geoip3 {
 	
 	public function city_info($ipaddress, $mode = 'geo-dms')
 	{
-		if ( ! $this->get_record($ipaddress))
+		if ( ! $this->record($ipaddress))
 			return NULL;
 		
-		return $this->get_city($ipaddress).' ('.$this->get_coord($ipaddress, $mode).')';
+		return $this->city($ipaddress).' ('.$this->coord($ipaddress, $mode).')';
 	}
 	
 	public function __deconstruct()
 	{
 		geoip_close($this->_geoinstance);
 	}
-    
+	
 }
