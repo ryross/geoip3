@@ -24,28 +24,28 @@ Ported by Ryder Ross. 01/29/2010
 
 		$ip = $_SERVER['REMOTE_ADDR'];
 		
-		echo Geoip3::instance()->getCity($ip) . "<br/>";
+		echo Geoip3::instance()->get_city($ip)."<br/>";
 		// will return the city name  
 		
 		$mode = 'geo';
-		echo Geoip3::instance()->getCoord($ip, $mode) . "<br/>";
+		echo Geoip3::instance()->get_coord($ip, $mode)."<br/>";
 		// will return the geographical coords
 		// $mode can be one of the following:
 		// 'geo-dms' - will return the coords in degree/minute/second format
 		// 'geo-dec' - will return the coords in a decimal format 
 		// 'geo'     - will return the raw coords
 
-		echo Geoip3::instance()->cityInfo($ip) . "<br/>"; 
+		echo Geoip3::instance()->city_info($ip)."<br/>"; 
 		// will return a nice formatted string consisting in the city name and 
 		//geo-dms coords between brackets
 
-		$property = 'area_code';
-		echo Geoip3::instance()->getProperty($property, $ip) . "<br/>";
+		$property = 'region';
+		echo Geoip3::instance()->get_property($property, $ip)."<br/>";
 		// will retrieve a specified property associated with an ip address 
 		// from the maxmind database. to get a list of possible property names,
 		// see the geoiprecord class from geoip3/vendor/maxmind/geoipcity.php
 
-		var_dump(Geoip3::instance()->getRecord($ip));
+		var_dump(Geoip3::instance()->get_record($ip));
 		// returns an object with all the information in the maxmind database
 		// related to an ip address, or null
 

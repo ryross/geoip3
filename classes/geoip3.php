@@ -1,22 +1,19 @@
 <?php defined('SYSPATH') OR die('No direct access allowed.');
 /**
- * Provides access to MaxMind's GeoIP. Converted to Kohana3 by Ryder Ross
+ * Provides access to MaxMind's GeoIP. Converted to Kohana3 by Ryder Ross. 
+ * Original module by Doru Moisa.
  *
- * @package    KohanaGeoip
- * @author     Doru Moisa
+ * @package    Geoip3
+ * @author     Ryder Ross
  */
 
 
 class Geoip3 {
 
-	// Configuration
 	protected $_config;
-	
-	// geoip instances
 	protected static $instance;
 	protected $_geoinstance;
 	protected $_cache = array();
-	
 	
 	/**
 	 * Singleton pattern
@@ -37,7 +34,7 @@ class Geoip3 {
 		return Geoip3::$instance;
 	}
 	
-	public function __construct($config = null)
+	public function __construct($config = NULL)
 	{
 		
 		$this->_config = Kohana::config('geoip3');
@@ -53,7 +50,7 @@ class Geoip3 {
 		}
 		
 		
-		if($this->_config['useshm'])
+		if ($this->_config['useshm'])
 		{
 			geoip_load_shared_mem($this->_config['dbfile']);
 			$this->_geoinstance = geoip_open($this->_config['dbfile'], GEOIP_SHARED_MEMORY);
@@ -65,29 +62,29 @@ class Geoip3 {
 		}
 	}
 	
-	public function getCity($ipaddress)
+	public function get_city($ipaddress)
 	{
-		return $this->getProperty('city', $ipaddress);
+		return $this->get_property('city', $ipaddress);
 	}
     
-	public function getRecord($ipaddress)
+	public function get_record($ipaddress)
 	{
 		global $GEOIP_REGION_NAME;
 		
-		if(!$this->_config['internalcache'])
+		if ( ! $this->_config['internalcache'])
 		{
 			$rec = geoip_record_by_addr($this->_geoinstance, $ipaddress);
-			if($rec)
+			if ($rec)
 			{
 				$rec->region = $GEOIP_REGION_NAME[$rec->country_code][$rec->region];
 			}
 			return $rec;
 		}
 		
-		if(!isset($this->_cache[$ipaddress]))
+		if ( ! isset($this->_cache[$ipaddress]))
 		{
 			$this->_cache[$ipaddress] = geoip_record_by_addr($this->_geoinstance, $ipaddress);
-			if($this->_cache[$ipaddress])
+			if ($this->_cache[$ipaddress])
 			{
 				$this->_cache[$ipaddress]->region =
 					$GEOIP_REGION_NAME[$this->_cache[$ipaddress]->country_code][$this->_cache[$ipaddress]->region];
@@ -96,45 +93,41 @@ class Geoip3 {
 		return $this->_cache[$ipaddress];
 	}
     
-	public function getCoord($ipaddress, $mode = 'geo-dms')
+	public function get_coord($ipaddress, $mode = 'geo-dms')
 	{
-		$rec = $this->getRecord($ipaddress);
-		if(!$rec) 
-		{
-			return null;
-		}
+		$rec = $this->get_record($ipaddress);
+		if ( ! $rec) 
+			return NULL;
 		
 		$modes = array('geo-dms', 'geo-dec', 'geo');
-		if(!in_array($mode, $modes))
+		if ( ! in_array($mode, $modes))
 		{
 			$mode = 'geo-dms';
 		}
 		
 		// standard geo
-		if($mode == 'geo')
-		{
+		if ($mode == 'geo')
 			return round($rec->latitude,3).'; '.round($rec->longitude, 3);
-		}
+
 		
 		$lat = round(str_replace("-","", $rec->latitude, $nr),3); // negative means South
 		$lat_dir = 'N';
-		if($nr)
+		if ($nr)
 		{	
 			$lat_dir= 'S';
 		}
 		
 		$long = round(str_replace("-","", $rec->longitude, $nr),3); // negative means West
 		$long_dir = 'E';
-		if($nr)
+		if ($nr)
 		{
 			$long_dir = 'W';
 		}
 		
 		// decimal
-		if($mode == 'geo-dec')
-		{
+		if ($mode == 'geo-dec')
 			return $lat.'&deg;'.$lat_dir.' '.$long.'&deg;'.$long_dir;
-		}
+
 		
 		// degree-minute-second
 		$d = floor($lat);
@@ -148,23 +141,22 @@ class Geoip3 {
 		return $lat.' '.$long;
 	}
 
-	public function getProperty($property, $ipaddress)
+	public function get_property($property, $ipaddress)
 	{
-		$record = $this->getRecord($ipaddress);
-		if(!$record)
-		{
-			return null;
-		}
-		return isset($record->$property) ? $record->$property : null;
+		$record = $this->get_record($ipaddress);
+		
+		if ( ! $record )
+			return NULL;
+			
+		return isset($record->$property) ? $record->$property : NULL;
 	}
 	
-	public function cityInfo($ipaddress, $mode = 'geo-dms')
+	public function city_info($ipaddress, $mode = 'geo-dms')
 	{
-		if(!$this->getRecord($ipaddress))
-		{
-			return null;
-		}
-		return $this->getCity($ipaddress) . ' ('.$this->getCoord($ipaddress, $mode).')';
+		if ( ! $this->get_record($ipaddress))
+			return NULL;
+		
+		return $this->get_city($ipaddress).' ('.$this->get_coord($ipaddress, $mode).')';
 	}
 	
 	public function __deconstruct()
