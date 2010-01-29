@@ -1,0 +1,15 @@
+GeoIP3 is a port of Doru Moisa's 2.3.x Kohana module. 
+
+
+Requirements:
+	GeoLite City database (http://www.maxmind.com/app/geolitecity)
+	Put the GeoLiteCity.dat file in modules/geoip3/database
+
+Example:
+
+	Coming soon
+
+
+
+
+
