@@ -15,7 +15,7 @@ class Geoip3 {
 	// geoip instances
 	protected static $instance;
 	protected $_geoinstance;
-	protected static $_cache = array();
+	protected $_cache = array();
 	
 	
 	/**
@@ -33,7 +33,7 @@ class Geoip3 {
 			// Create a new session instance
 			Geoip3::$instance = new Geoip3($config);
 		}
-
+		
 		return Geoip3::$instance;
 	}
 	
@@ -55,12 +55,13 @@ class Geoip3 {
 		
 		if($this->_config['useshm'])
 		{
-			$this->_geoinstance = geoip_open($this->_config['dbfile'], GEOIP_STANDARD);
+			geoip_load_shared_mem($this->_config['dbfile']);
+			$this->_geoinstance = geoip_open($this->_config['dbfile'], GEOIP_SHARED_MEMORY);
+			
 		}
 		else
 		{
-			geoip_load_shared_mem($this->_config['dbfile']);
-			$this->_geoinstance = geoip_open($this->_config['dbfile'], GEOIP_SHARED_MEMORY);
+			$this->_geoinstance = geoip_open($this->_config['dbfile'], GEOIP_STANDARD);
 		}
 	}
 	
@@ -75,7 +76,7 @@ class Geoip3 {
 		
 		if(!$this->_config['internalcache'])
 		{
-			$rec = geoip_record_by_addr($this->_geoipinstance, $ipaddress);
+			$rec = geoip_record_by_addr($this->_geoinstance, $ipaddress);
 			if($rec)
 			{
 				$rec->region = $GEOIP_REGION_NAME[$rec->country_code][$rec->region];
@@ -85,7 +86,7 @@ class Geoip3 {
 		
 		if(!isset($this->_cache[$ipaddress]))
 		{
-			$this->_cache[$ipaddress] = geoip_record_by_addr($this->_geoipinstance, $ipaddress);
+			$this->_cache[$ipaddress] = geoip_record_by_addr($this->_geoinstance, $ipaddress);
 			if($this->_cache[$ipaddress])
 			{
 				$this->_cache[$ipaddress]->region =

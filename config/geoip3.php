@@ -8,8 +8,8 @@
 
 return array
 (
-	'dbfile' => MODPATH.'ko3geoip'.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'GeoLiteCity.dat',
+	'dbfile' => MODPATH.'geoip3'.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'GeoLiteCity.dat',
 	'useshm' => FALSE,
-	'internalcache' => FALSE;
+	'internalcache' => TRUE
 
 );
