@@ -10,7 +10,11 @@
 
 class Geoip3 {
 
-	protected $_config;
+	protected $_config = array(
+		'dbfile' =>'',
+		'useshm' => FALSE,
+		'internalcache' => TRUE
+	);
 	protected static $_instance;
 	protected $_geoinstance;
 	protected $_cache = array();
@@ -32,12 +36,12 @@ class Geoip3 {
 	public function __construct($config = NULL)
 	{
 		
-		$this->_config = Kohana::config('geoip3');
+		$this->_config['dbfile'] =  MODPATH.'geoip3'.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'GeoLiteCity.dat';
+		
 		if(is_array($config))
 		{
 			$this->_config = array_merge($this->_config, $config);
 		}
-		
 		
 		if ( ! class_exists('GeoIP', FALSE))
 		{
