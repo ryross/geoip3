@@ -10,11 +10,7 @@
 
 class Geoip3 {
 
-	protected $_config = array(
-		'dbfile' =>'',
-		'useshm' => FALSE,
-		'internalcache' => TRUE
-	);
+	protected $_config = array();
 	protected static $_instance;
 	protected $_geoinstance;
 	protected $_cache = array();
@@ -25,7 +21,7 @@ class Geoip3 {
 		{
 			// Load the configuration for this type
 			$config = Kohana::config('geoip3');
-
+			
 			// Create a new session instance
 			Geoip3::$_instance = new Geoip3($config);
 		}
@@ -33,34 +29,28 @@ class Geoip3 {
 		return Geoip3::$_instance;
 	}
 	
-	public function __construct($config = NULL)
+	private function __construct($config = NULL)
 	{
-		
-		$this->_config['dbfile'] =  MODPATH.'geoip3'.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'GeoLiteCity.dat';
-		
-		if(is_array($config))
-		{
-			$this->_config = array_merge($this->_config, $config);
-		}
+		$this->_config = ($config === NULL) ? Kohana::config('geoip3') : $config;
 		
 		if ( ! class_exists('GeoIP', FALSE))
 		{
-			// Load SwiftMailer Autoloader
+			// Load MaxMind GeoIP classes
 			require_once Kohana::find_file('vendor', 'maxmind/geoip');
 			require_once Kohana::find_file('vendor', 'maxmind/geoipcity');
 			require_once Kohana::find_file('vendor', 'maxmind/geoipregionvars');
 		}
 		
 		
-		if ($this->_config['useshm'])
+		if ($this->_config->useshm)
 		{
-			geoip_load_shared_mem($this->_config['dbfile']);
-			$this->_geoinstance = geoip_open($this->_config['dbfile'], GEOIP_SHARED_MEMORY);
+			geoip_load_shared_mem($this->_config->dbfile);
+			$this->_geoinstance = geoip_open($this->_config->dbfile, GEOIP_SHARED_MEMORY);
 			
 		}
 		else
 		{
-			$this->_geoinstance = geoip_open($this->_config['dbfile'], GEOIP_STANDARD);
+			$this->_geoinstance = geoip_open($this->_config->dbfile, GEOIP_STANDARD);
 		}
 	}
 	
@@ -73,7 +63,7 @@ class Geoip3 {
 	{
 		global $GEOIP_REGION_NAME;
 		
-		if ( ! $this->_config['internalcache'])
+		if ( ! $this->_config->internalcache)
 		{
 			$rec = geoip_record_by_addr($this->_geoinstance, $ipaddress);
 			if ($rec)
@@ -161,7 +151,7 @@ class Geoip3 {
 		return $this->city($ipaddress).' ('.$this->coord($ipaddress, $mode).')';
 	}
 	
-	public function __deconstruct()
+	private function __deconstruct()
 	{
 		geoip_close($this->_geoinstance);
 	}
