@@ -12,6 +12,7 @@ class Geoip3 {
 
 	protected $_config = array();
 	protected $_geoinstance;
+	protected $_extension = false;
 	protected $_cache = array();
 
 	/**
@@ -61,28 +62,30 @@ class Geoip3 {
 		return new Geoip3($config);
 	}
 
-	private function __construct($config = NULL)
+	public function __construct($config = NULL)
 	{
 		$this->_config = ($config === NULL) ? Kohana::$config->load('geoip3') : $config;
 
-		if ( ! class_exists('GeoIP', FALSE))
+		if ( ! extension_loaded('geoip'))
 		{
-			// Load MaxMind GeoIP classes
-			require_once Kohana::find_file('vendor', 'maxmind/geoip');
-			require_once Kohana::find_file('vendor', 'maxmind/geoipcity');
-			require_once Kohana::find_file('vendor', 'maxmind/geoipregionvars');
-		}
+			if( ! class_exists('GeoIP', FALSE) ) {
+				// Load MaxMind GeoIP classes
+				require_once Kohana::find_file('vendor', 'maxmind/geoip');
+				require_once Kohana::find_file('vendor', 'maxmind/geoipcity');
+				require_once Kohana::find_file('vendor', 'maxmind/geoipregionvars');
+			}
+			if ($this->_config->useshm)
+			{
+				geoip_load_shared_mem($this->_config->dbfile);
+				$this->_geoinstance = geoip_open($this->_config->dbfile, GEOIP_SHARED_MEMORY);
 
-
-		if ($this->_config->useshm)
-		{
-			geoip_load_shared_mem($this->_config->dbfile);
-			$this->_geoinstance = geoip_open($this->_config->dbfile, GEOIP_SHARED_MEMORY);
-
-		}
-		else
-		{
-			$this->_geoinstance = geoip_open($this->_config->dbfile, GEOIP_STANDARD);
+			}
+			else
+			{
+				$this->_geoinstance = geoip_open($this->_config->dbfile, GEOIP_STANDARD);
+			}
+		} else {
+			$this->_extension = true;
 		}
 	}
 
@@ -93,28 +96,29 @@ class Geoip3 {
 
 	public function record($ipaddress)
 	{
-		global $GEOIP_REGION_NAME;
+		if ( !$this->_extension )
+			global $GEOIP_REGION_NAME;
 
-		if ( ! $this->_config->internalcache)
-		{
+		if ( $this->_config->internalcache && array_key_exists($ipaddress, $this->_cache))
+			return $this->_cache[$ipaddress];
+
+		if ( $this->_extension)
+			$rec = (object)geoip_record_by_name($ipaddress);
+		else
 			$rec = geoip_record_by_addr($this->_geoinstance, $ipaddress);
-			if ($rec)
-			{
+
+		if ($rec)
+		{
+			if ( $this->_extension )
+				$rec->region = geoip_region_name_by_code($rec->country_code, $rec->region);
+			else
 				$rec->region = $GEOIP_REGION_NAME[$rec->country_code][$rec->region];
-			}
-			return $rec;
 		}
 
-		if ( ! isset($this->_cache[$ipaddress]))
-		{
-			$this->_cache[$ipaddress] = geoip_record_by_addr($this->_geoinstance, $ipaddress);
-			if ($this->_cache[$ipaddress])
-			{
-				$this->_cache[$ipaddress]->region =
-					$GEOIP_REGION_NAME[$this->_cache[$ipaddress]->country_code][$this->_cache[$ipaddress]->region];
-			}
-		}
-		return $this->_cache[$ipaddress];
+		if($this->_config->internalcache)
+			return $this->_cache[$ipaddress] = $rec;
+
+		return $rec;
 	}
 
 	public function coord($ipaddress, $mode = 'geo-dms')
@@ -185,7 +189,8 @@ class Geoip3 {
 
 	private function __deconstruct()
 	{
-		geoip_close($this->_geoinstance);
+		if(!$this->_extension)
+			geoip_close($this->_geoinstance);
 	}
 
 }
