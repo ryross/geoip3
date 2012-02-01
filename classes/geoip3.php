@@ -19,8 +19,7 @@ class Geoip3 {
 	 * Singleton instance
 	 *
 	 * @chainable
-	 * @param string $service The geocoding web service class name ('Google', 'Yahoo')
-	 * @param string $key The API key for the web service being used
+	 * @param string $config
 	 * @return object
 	 */
 	public static function instance($config = NULL)
@@ -46,8 +45,7 @@ class Geoip3 {
 	 * Singleton factory
 	 *
 	 * @chainable
-	 * @param string $service The geocoding web service class name ('Google', 'Yahoo')
-	 * @param string $key The API key for the web service being used
+	 * @param string $config
 	 * @return object
 	 */
 	public static function factory($config = NULL)
@@ -62,6 +60,12 @@ class Geoip3 {
 		return new Geoip3($config);
 	}
 
+
+	/**
+	 * Constructor
+	 *
+	 * @param string $config
+	 */
 	public function __construct($config = NULL)
 	{
 		$this->_config = ($config === NULL) ? Kohana::$config->load('geoip3') : $config;
